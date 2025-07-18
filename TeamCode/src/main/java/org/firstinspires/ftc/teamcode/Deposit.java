@@ -8,6 +8,7 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
+import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
 
 public class Deposit {
     //Servos
@@ -37,9 +38,19 @@ public class Deposit {
     public static double ki=0.0;//not very useful
     public static double kd=0.0;
     public static int HomePos=0;
-    public static long startTime;
+
+    public  long startTime;
     private int targetHeight=HomePos;
     public static int maxHeight=1000;
+    public boolean retracting=false;
+    public static int stallOffset=60;
+
+    public static double StallPower=-0.3;
+    public static double holdStallPower=-0.1;
+    public static double stallRange=60;
+    public int drift=0;
+    public double stallCurrent=3;
+    public boolean slidesStalled=false;
 
     public Deposit(LinearOpMode op){
         depClaw = op.hardwareMap.get(Servo.class,"depClaw");
@@ -90,6 +101,9 @@ public class Deposit {
         int pos = (depLeftSlide.getCurrentPosition()+depRightSlide.getCurrentPosition())/2;
         return pos;
     }
+    public double slidesCurrent(){
+        return(depLeftSlide.getCurrent(CurrentUnit.AMPS)+depRightSlide.getCurrent(CurrentUnit.AMPS));
+    }
     public void extend(int targetPos,long time){
         ErrorSum=0;
         lastError=0;
@@ -101,13 +115,28 @@ public class Deposit {
         lastError=0;
         startTime=time;
         targetHeight=HomePos;
+        retracting=true;
+
     }
     public void updateSlides(long time){
         long TIME=time-startTime;
         startTime=time;
-        double power=PID(slidesPos(),targetHeight,TIME);
+        double power=PID(slidesPos(),targetHeight+drift,TIME);
         depLeftSlide.setPower(power);
         depRightSlide.setPower(power);
+        if(!slidesStalled&&retracting&&slidesPos()<(HomePos+stallRange)){
+            depLeftSlide.setPower(StallPower);
+            depRightSlide.setPower(StallPower);
+            if(slidesCurrent()>stallCurrent){
+                retracting=false;
+                slidesStalled=true;
+                drift+=HomePos-slidesPos();
+            }
+        }else if(slidesStalled){
+            depLeftSlide.setPower(holdStallPower);
+            depRightSlide.setPower(holdStallPower);
+
+        }
     }
 
 }

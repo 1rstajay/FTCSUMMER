@@ -8,10 +8,16 @@ public class Robot {
     Drive drive;
     Deposit deposit;
     Intake intake;
+    //TODO needs tuning
     public static int slidesIntakePos=500;
     public long startClawClose;
-    public boolean clawCloseApproval=false;
     public int clawCloseDelay=600;
+    public static int HighBasketPos=700;
+    public int SlidesAdjust = 0;
+    //aprovals
+    public boolean clawCloseApproval=false;
+    public boolean depositClawApproval=false;
+    public boolean depositReady=false;
     public Robot(LinearOpMode op, double x, double y,double theta){
         drive = new Drive(op);
         intake = new Intake(op);
@@ -30,12 +36,13 @@ public class Robot {
                 deposit.depArmTransfer();
                 deposit.DepRotateTransfer();
                 deposit.DepClawOpen();
-                intake.slidesAdjust=0;
-                intake.adjustableRotate=0;
+                SlidesAdjust = 0;
+                intake.adjustableRotate = 0;
+                startClawClose=curTime;
             break;
             case "intake":
                 intake.clawOpen();
-                intake.extend((slidesIntakePos + intake.slidesAdjust),curTime);
+                intake.extend((slidesIntakePos + SlidesAdjust),curTime);
                 intake.wristIntaking();
                 intake.rotate(intake.intakeRotatePos + intake.adjustableRotate);
                 if(!clawCloseApproval){
@@ -45,9 +52,40 @@ public class Robot {
                     Mode="Home";
                     clawCloseApproval=false;
                 }
+            break;
+            case "deposit":
+                if(!depositReady&&intake.slidesStalled&&deposit.slidesStalled){
+                    deposit.DepClawClose();
+                    intake.clawOpen();
+                    if(curTime-startClawClose>clawCloseDelay){
+                        depositReady=true;
+                    }
+                }else if(depositReady){
+                        deposit.extend(HighBasketPos+SlidesAdjust,curTime);
+                        deposit.depArmDeposit();
+                        deposit.DepRotateDeposit();
+                        if(depositClawApproval){
+                            deposit.DepClawOpen();
+                        }else {
+                            startClawClose=curTime;
+                        }
+                }else{
+                    startClawClose=curTime;
+                }
 
+                if(depositClawApproval&&curTime-startClawClose>clawCloseDelay){
+                    Mode="Home";
+                    depositReady=false;
+                    depositClawApproval=false;
+                }
+                break;
+
+
+
+
+
+        }
         intake.updateSlides(curTime);
         deposit.updateSlides(curTime);
-        }
     }
 }

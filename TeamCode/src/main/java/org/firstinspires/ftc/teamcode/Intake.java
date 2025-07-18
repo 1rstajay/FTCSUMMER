@@ -2,8 +2,9 @@ package org.firstinspires.ftc.teamcode;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
-import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
+
+import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
 
 public class Intake {
     private Servo intakeClaw;//pretty obvious
@@ -28,8 +29,8 @@ public class Intake {
     public static double wristTransferPos=0.5;
     public static double rotateTransfer=0.5;
     public static double intakeRotatePos=0.5;
-    public double adjustableRotate=0.5;
-    public int slidesAdjust=0;
+    public double adjustableRotate=0.0;
+
 
     //TODO PID stuff
 
@@ -42,7 +43,16 @@ public class Intake {
     public static int slideHomePos=0;//this is the fully rectracted pos;
     public static int targetheight=slideHomePos;
     public static int Maxheight=10000;//def needs to be tune es muy importanto
-    private double startTime;
+    private long startTime;
+    public boolean retracting=false;
+    public static int stallOffset=60;
+
+    public static double StallPower=-0.3;
+    public static double holdStallPower=-0.1;
+    public static double stallRange=60;
+    public int drift=0;
+    public double stallCurrent=3;
+    public boolean slidesStalled=false;
 
     public Intake(LinearOpMode op){
 
@@ -90,28 +100,45 @@ public class Intake {
         errorSum+=error*time;
         return ((kp*error)+(ki*errorSum)+(kd*errorChange));
     }
-    public void extend(int targetPos,double time){
+    public void extend(int targetPos,long time){
         startTime=time;
         errorSum=0;
         lastError=0;
         targetheight=Math.min(targetPos,Maxheight);
     }
-    public void retract(double time){
+    public void retract(long time){
         startTime=time;
         errorSum=0;
         lastError=0;
        targetheight=slideHomePos;
+        retracting=true;
     }
-    public void updateSlides(double time){
+    public void updateSlides(long time){
         double TIME=time-startTime;
         startTime=time;
-        double power=PID(getSlidePos(),targetheight,TIME);
-        intakeRightSlide.setPower(power);
+        double power=PID(getSlidePos(),targetheight+drift,TIME);
         intakeLeftSlide.setPower(power);
+        intakeRightSlide.setPower(power);
+        if(!slidesStalled&&retracting&&getSlidePos()<(slideHomePos+stallRange)){
+            intakeLeftSlide.setPower(StallPower);
+            intakeRightSlide.setPower(StallPower);
+            if(slidesCurrent()>stallCurrent){
+                retracting=false;
+                slidesStalled=true;
+                drift+=slideHomePos-getSlidePos();
+            }
+        }else if(slidesStalled){
+            intakeLeftSlide.setPower(holdStallPower);
+            intakeRightSlide.setPower(holdStallPower);
+
+        }
     }
     public int getSlidePos(){
         int pos=((intakeLeftSlide.getCurrentPosition()+ intakeRightSlide.getCurrentPosition())/2);
         return pos;
+    }
+    public double slidesCurrent(){
+        return(intakeLeftSlide.getCurrent(CurrentUnit.AMPS)+intakeRightSlide.getCurrent(CurrentUnit.AMPS));
     }
 
 }
