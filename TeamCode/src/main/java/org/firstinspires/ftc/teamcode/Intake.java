@@ -34,9 +34,9 @@ public class Intake {
 
     //TODO PID stuff
 
-    double kp=0;
-    double ki=0; // not very useful
-    double kd=0;
+    public static double kp=0;
+    public static double ki=0; // not very useful
+    public static double kd=0;
     private int errorChange;
     private int lastError=0;
     private int errorSum=0;

@@ -35,7 +35,7 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import org.firstinspires.ftc.robotcore.external.ClassFactory;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.CameraName;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
-import org.firstinspires.ftc.robotcore.external.tfod.Recognition;
+//import org.firstinspires.ftc.robotcore.external.tfod.Recognition;
 import org.firstinspires.ftc.vision.VisionPortal;
 import org.firstinspires.ftc.vision.VisionPortal.CameraState;
 import org.firstinspires.ftc.vision.tfod.TfodProcessor;
@@ -85,7 +85,7 @@ public class ConceptTensorFlowObjectDetectionSwitchableCameras extends LinearOpM
             while (opModeIsActive()) {
 
                 telemetryCameraSwitching();
-                telemetryTfod();
+//                telemetryTfod();
 
                 // Push telemetry to the Driver Station.
                 telemetry.update();
@@ -146,7 +146,7 @@ public class ConceptTensorFlowObjectDetectionSwitchableCameras extends LinearOpM
     /**
      * Add telemetry about TensorFlow Object Detection (TFOD) recognitions.
      */
-    private void telemetryTfod() {
+    /*private void telemetryTfod() {
 
         List<Recognition> currentRecognitions = tfod.getRecognitions();
         telemetry.addData("# Objects Detected", currentRecognitions.size());
@@ -162,7 +162,7 @@ public class ConceptTensorFlowObjectDetectionSwitchableCameras extends LinearOpM
             telemetry.addData("- Size", "%.0f x %.0f", recognition.getWidth(), recognition.getHeight());
         }   // end for() loop
 
-    }   // end method telemetryTfod()
+    }   // end method telemetryTfod()*/
 
     /**
      * Set the active camera according to input from the gamepad.
