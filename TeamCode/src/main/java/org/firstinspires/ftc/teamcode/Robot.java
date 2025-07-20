@@ -31,7 +31,7 @@ public class Robot {
     public boolean startClawA = false;
     public boolean pullSlideDownApproval = false;
 
-    public boolean diddyFun = false;
+    public boolean diddyFun = false; // diddyFun is approval for closing the claw
     public Robot(LinearOpMode op, double x, double y,double theta){
         drive = new Drive(op);
         intake = new Intake(op);
