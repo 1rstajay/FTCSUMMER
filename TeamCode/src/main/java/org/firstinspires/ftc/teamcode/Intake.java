@@ -1,24 +1,22 @@
 package org.firstinspires.ftc.teamcode;
+import com.acmerobotics.dashboard.config.Config;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.Servo;
 
 import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
+@Config
 
 public class Intake {
     private Servo intakeClaw;//pretty obvious
 
     //rotate servo is thing that rotates the claw
-    private Servo intakeRotate;
-
     //wrist servos move claw up and down
-    private Servo intakeLeftWrist;//left from bot perspective
-    private Servo intakeRightWrist;//right from bot perspective
+    private Servo intakeWrist;//left from bot perspective
 
     //slide motors
-    private DcMotorEx intakeLeftSlide;//left and right also from bot perspective
-    private DcMotorEx intakeRightSlide;
+    private DcMotorEx intakeSlide;//left and right also from bot perspective
 
 
     //TODO needs tuning
@@ -27,9 +25,6 @@ public class Intake {
     public static double wristIntakePos=0.5;
     public static double wristOffest=0.0;
     public static double wristTransferPos=0.5;
-    public static double rotateTransfer=0.5;
-    public static double intakeRotatePos=0.5;
-    public double adjustableRotate=0.0;
 
 
     //TODO PID stuff
@@ -57,14 +52,10 @@ public class Intake {
     public Intake(LinearOpMode op){
 
         intakeClaw = op.hardwareMap.get(Servo.class,("intakeClaw"));
-        intakeRotate = op.hardwareMap.get(Servo.class,("intakeRotate"));
-        intakeLeftWrist = op.hardwareMap.get(Servo.class,("intakeLeftWrist"));
-        intakeRightWrist = op.hardwareMap.get(Servo.class,("intakeRightWrist"));
-        intakeLeftSlide = op.hardwareMap.get(DcMotorEx.class,("intakeLeftSlide"));
-        intakeRightSlide = op.hardwareMap.get(DcMotorEx.class,("intakeRightSlide"));
+        intakeWrist = op.hardwareMap.get(Servo.class,("intakeWrist"));
+        intakeSlide = op.hardwareMap.get(DcMotorEx.class,("intakeSlide"));
 
-        intakeLeftSlide.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        intakeRightSlide.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        intakeSlide.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
     }
     //claw methods
     public void clawOpen(){
@@ -74,24 +65,14 @@ public class Intake {
         intakeClaw.setPosition(clawClosePos);
     }
     //wrist methods
-    private void wristSync(double pos){
-        intakeLeftWrist.setPosition(pos);
-        intakeRightWrist.setPosition((1-pos)+wristOffest);
-    }
     public void wristIntaking(){
-        wristSync(wristIntakePos);
+        intakeWrist.setPosition(wristIntakePos);
 
     }
     public void wristTransfer(){
-        wristSync(wristTransferPos);
+        intakeWrist.setPosition(wristTransferPos);
     }
     //rotate
-    public void rotate(double pos){
-        intakeRotate.setPosition(pos);// prob gonna use joystick to control this or smth
-    }
-    public void rotateTransfer(){
-        intakeRotate.setPosition(rotateTransfer);
-    }
     //PID(more like PD) and slide stuff
     public double PID(int currPos, int targetPos,double time){
         int error = targetPos-currPos;
@@ -117,28 +98,25 @@ public class Intake {
         double TIME=time-startTime;
         startTime=time;
         double power=PID(getSlidePos(),targetheight+drift,TIME);
-        intakeLeftSlide.setPower(power);
-        intakeRightSlide.setPower(power);
+        intakeSlide.setPower(power);
         if(!slidesStalled&&retracting&&getSlidePos()<(slideHomePos+stallRange)){
-            intakeLeftSlide.setPower(StallPower);
-            intakeRightSlide.setPower(StallPower);
+            intakeSlide.setPower(StallPower);
             if(slidesCurrent()>stallCurrent){
                 retracting=false;
                 slidesStalled=true;
                 drift+=slideHomePos-getSlidePos();
             }
         }else if(slidesStalled){
-            intakeLeftSlide.setPower(holdStallPower);
-            intakeRightSlide.setPower(holdStallPower);
+            intakeSlide.setPower(holdStallPower);
 
         }
     }
     public int getSlidePos(){
-        int pos=((intakeLeftSlide.getCurrentPosition()+ intakeRightSlide.getCurrentPosition())/2);
+        int pos=(intakeSlide.getCurrentPosition());
         return pos;
     }
     public double slidesCurrent(){
-        return(intakeLeftSlide.getCurrent(CurrentUnit.AMPS)+intakeRightSlide.getCurrent(CurrentUnit.AMPS));
+        return(intakeSlide.getCurrent(CurrentUnit.AMPS));
     }
 
 }

@@ -1,7 +1,8 @@
 package org.firstinspires.ftc.teamcode;
 
+import com.acmerobotics.dashboard.config.Config;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
-
+@Config
 public class Robot {
     long curTime;
     String Mode="Home";
@@ -32,19 +33,16 @@ public class Robot {
                 deposit.retract(curTime);
                 intake.retract(curTime);
                 intake.wristTransfer();
-                intake.rotateTransfer();
                 deposit.depArmTransfer();
                 deposit.DepRotateTransfer();
                 deposit.DepClawOpen();
                 SlidesAdjust = 0;
-                intake.adjustableRotate = 0;
                 startClawClose=curTime;
             break;
             case "intake":
                 intake.clawOpen();
                 intake.extend((slidesIntakePos + SlidesAdjust),curTime);
                 intake.wristIntaking();
-                intake.rotate(intake.intakeRotatePos + intake.adjustableRotate);
                 if(!clawCloseApproval){
                     startClawClose=curTime;
                 }
@@ -79,6 +77,11 @@ public class Robot {
                     depositClawApproval=false;
                 }
                 break;
+            case "SpecimenIntake":
+                deposit.extend(deposit.slidesSpecimenIntake,curTime);
+                intake.retract(curTime);
+                deposit.specimenIntake();
+
 
 
 

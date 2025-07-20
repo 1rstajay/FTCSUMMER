@@ -1,4 +1,5 @@
 package org.firstinspires.ftc.teamcode;
+import com.acmerobotics.dashboard.config.Config;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -9,7 +10,7 @@ import com.qualcomm.robotcore.hardware.Servo;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
-
+@Config
 public class Deposit {
     //Servos
     private Servo depClaw;//the claw is well the claw
@@ -30,8 +31,15 @@ public class Deposit {
     public static double armOffset=0.0;
     public static double armTransfer=0.5;
     public static double armDeposit=0.5;
+    public static double armSpecimentIntakePos=0.5;
+    public static double rotateSpecimenIntake=0.5;
+    public static double rotateSpecimenOutake=0.5;
+    public static double armSpecimenOutake=0.5;
     // PID&Slides stuff
     //TODO needs tuning pls
+    public int slidesSpecimenIntake=200;
+    public int slidesSpecimenOutaking=500;
+    public int slidesSpecimenDeposit=300;
     private int lastError=0;
     private int ErrorSum=0;
     public static double kp=0.0;
@@ -63,6 +71,8 @@ public class Deposit {
         depRightSlide.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         depLeftSlide.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
+        depRightSlide.setDirection(DcMotorSimple.Direction.REVERSE);
+
         //TODO might need to reverse a slide motors so they run in the same direction so pls check
         //depRightSlide.setDirection(DcMotorSimple.Direction.REVERSE);
     }
@@ -78,6 +88,11 @@ public class Deposit {
     }
     public void DepRotateDeposit(){
         depRotate.setPosition(RotateDeposit);
+    }
+    public void specimenIntake(){
+        depClaw.setPosition(depClawOpen);
+        depRotate.setPosition(rotateSpecimenIntake);
+        depArmSync(armSpecimentIntakePos);
     }
     private void depArmSync(double pos){//to sync servos
         depArmL.setPosition(pos);

@@ -1,14 +1,21 @@
 package org.firstinspires.ftc.teamcode;
 
+import com.acmerobotics.dashboard.FtcDashboard;
+import com.acmerobotics.dashboard.config.Config;
+import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
-@TeleOp (name = "Teleop")
+import org.firstinspires.ftc.robotcore.external.Telemetry;
+
+@TeleOp (name = "Sample Teleop")
+@Config
 public class Teleop extends LinearOpMode {
     Robot robot;
     @Override
     public void runOpMode() throws InterruptedException {
         robot=new Robot(this,0,0,0);
+        Telemetry telemetry = new MultipleTelemetry(this.telemetry, FtcDashboard.getInstance().getTelemetry());
 
         isStarted();
         while(opModeIsActive()){
@@ -29,12 +36,7 @@ public class Teleop extends LinearOpMode {
                 }else if(gamepad1.dpad_down){
                     robot.SlidesAdjust -=10;
                 }
-                if(gamepad1.dpad_left){
-                    robot.intake.adjustableRotate+=0.05;
-                }
-                if(gamepad1.dpad_right){
-                    robot.intake.adjustableRotate-=0.05;
-                }
+
                 if(gamepad1.right_bumper){
                     robot.clawCloseApproval=true;
                 }
@@ -53,6 +55,7 @@ public class Teleop extends LinearOpMode {
                 }
             }
             robot.UpdateRobot();
+            telemetry.addData("state: ",robot.Mode);
         }
     }
 }
