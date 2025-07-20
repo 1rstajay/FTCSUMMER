@@ -62,6 +62,9 @@ public class Teleop extends LinearOpMode {
                   robot.specimenIntakeClawApproval=true;
               }
             }
+            if(robot.Mode.equals("SpecimenOutake") && gamepad1.dpad_down) {
+                robot.pullSlideDownApproval = true;
+            }
 
             robot.UpdateRobot();
             telemetry.addData("state: ",robot.Mode);

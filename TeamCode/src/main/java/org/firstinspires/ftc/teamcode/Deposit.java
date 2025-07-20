@@ -39,7 +39,7 @@ public class Deposit {
     //TODO needs tuning pls
     public int slidesSpecimenIntake=200;
     public int slidesSpecimenOutaking=500;
-    public int slidesSpecimenDeposit=300;
+    public int slidesSpecimenDeposit=900;
     private int lastError=0;
     private int ErrorSum=0;
     public static double kp=0.0;
@@ -88,6 +88,11 @@ public class Deposit {
     }
     public void DepRotateDeposit(){
         depRotate.setPosition(RotateDeposit);
+    }
+    public void specimenOutake() {
+        depClaw.setPosition(depClawClose);
+        depRotate.setPosition(rotateSpecimenOutake);
+        depArmSync(armSpecimenOutake);
     }
     public void specimenIntake(){
         depClaw.setPosition(depClawOpen);

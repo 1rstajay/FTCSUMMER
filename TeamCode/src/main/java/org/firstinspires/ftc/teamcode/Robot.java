@@ -22,6 +22,16 @@ public class Robot {
     public boolean specimenIntakeClawApproval=false;
     public long specimenIntakeStartTime=0;
     public int specimenIntakeDelay=600;
+    public int specimenOutakeDelay=1200;
+    public long startSpecimenOutakeTime = 0;
+    public int specimenPullSlideDownDelay = 600;
+    public long startPullSlideDownDelay = 0;
+    public long startOpenClawForAttachingDelay = 0;
+    public long specimenOpenClawForAttachingDelay = 250;
+    public boolean startClawA = false;
+    public boolean pullSlideDownApproval = false;
+
+    public boolean diddyFun = false;
     public Robot(LinearOpMode op, double x, double y,double theta){
         drive = new Drive(op);
         intake = new Intake(op);
@@ -41,7 +51,8 @@ public class Robot {
                 deposit.DepClawOpen();
                 SlidesAdjust = 0;
                 startClawClose=curTime;
-                specimenIntakeStartTime=curTime;
+                specimenIntakeStartTime = curTime;
+
             break;
             case "intake":
                 intake.clawOpen();
@@ -85,21 +96,44 @@ public class Robot {
                     deposit.extend(deposit.slidesSpecimenIntake, curTime);
                     intake.retract(curTime);
                     deposit.specimenIntake();
-                    startClawClose=curTime;
                 if(curTime-specimenIntakeStartTime>specimenIntakeDelay) {
                     if (specimenIntakeClawApproval) {
                         deposit.DepClawClose();
                     }
                 }
+                if(!specimenIntakeClawApproval){
+                    startClawClose = curTime;
+                }
                 if(curTime-startClawClose>clawCloseDelay){
-
+                    Mode=("SpecimenOutake");
+                    specimenIntakeClawApproval = false;
+                    startSpecimenOutakeTime = curTime;
                 }
             case "SpecimenOutake":
+                deposit.extend(deposit.slidesSpecimenOutaking, curTime);
+                deposit.specimenOutake();
+                if (curTime - startSpecimenOutakeTime > specimenOutakeDelay) {
+                    deposit.extend(deposit.slidesSpecimenDeposit, curTime);
+
+                }
+                if(!pullSlideDownApproval) startPullSlideDownDelay = curTime;
+                if (pullSlideDownApproval) {
+                    if (curTime - startPullSlideDownDelay > specimenPullSlideDownDelay) {
+                        deposit.DepClawOpen();
+                        diddyFun = true;
+                    }
+                    if(!diddyFun){
+                        startOpenClawForAttachingDelay = curTime;
+                    }
+                    if (curTime - startOpenClawForAttachingDelay > specimenOpenClawForAttachingDelay) {
+                        pullSlideDownApproval = false;
+                        diddyFun = false;
+                        Mode="Home";
 
 
+                    }
 
-
-
+                }
 
         }
         intake.updateSlides(curTime);
