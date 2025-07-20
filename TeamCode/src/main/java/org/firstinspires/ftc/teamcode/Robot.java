@@ -19,6 +19,9 @@ public class Robot {
     public boolean clawCloseApproval=false;
     public boolean depositClawApproval=false;
     public boolean depositReady=false;
+    public boolean specimenIntakeClawApproval=false;
+    public long specimenIntakeStartTime=0;
+    public int specimenIntakeDelay=600;
     public Robot(LinearOpMode op, double x, double y,double theta){
         drive = new Drive(op);
         intake = new Intake(op);
@@ -38,6 +41,7 @@ public class Robot {
                 deposit.DepClawOpen();
                 SlidesAdjust = 0;
                 startClawClose=curTime;
+                specimenIntakeStartTime=curTime;
             break;
             case "intake":
                 intake.clawOpen();
@@ -78,9 +82,19 @@ public class Robot {
                 }
                 break;
             case "SpecimenIntake":
-                deposit.extend(deposit.slidesSpecimenIntake,curTime);
-                intake.retract(curTime);
-                deposit.specimenIntake();
+                    deposit.extend(deposit.slidesSpecimenIntake, curTime);
+                    intake.retract(curTime);
+                    deposit.specimenIntake();
+                    startClawClose=curTime;
+                if(curTime-specimenIntakeStartTime>specimenIntakeDelay) {
+                    if (specimenIntakeClawApproval) {
+                        deposit.DepClawClose();
+                    }
+                }
+                if(curTime-startClawClose>clawCloseDelay){
+
+                }
+            case "SpecimenOutake":
 
 
 

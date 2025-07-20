@@ -54,6 +54,15 @@ public class Teleop extends LinearOpMode {
                     robot.depositClawApproval=true;
                 }
             }
+            if(gamepad1.y&&robot.Mode.equals("Home")){
+                robot.Mode="SpecimenIntake";
+            }
+            if(robot.Mode.equals("SpecimenIntake")) {
+              if(gamepad1.y) {
+                  robot.specimenIntakeClawApproval=true;
+              }
+            }
+
             robot.UpdateRobot();
             telemetry.addData("state: ",robot.Mode);
         }
