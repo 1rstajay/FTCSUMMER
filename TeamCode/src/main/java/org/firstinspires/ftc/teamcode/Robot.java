@@ -15,22 +15,20 @@ public class Robot {
     public int clawCloseDelay=600;
     public static int HighBasketPos=700;
     public int SlidesAdjust = 0;
-    //aprovals
-    public boolean clawCloseApproval=false;
-    public boolean depositClawApproval=false;
-    public boolean depositReady=false;
-    public boolean specimenIntakeClawApproval=false;
     public long specimenIntakeStartTime=0;
     public int specimenIntakeDelay=600;
     public int specimenOutakeDelay=1200;
     public long startSpecimenOutakeTime = 0;
     public int specimenPullSlideDownDelay = 600;
     public long startPullSlideDownDelay = 0;
-    public long startOpenClawForAttachingDelay = 0;
-    public long specimenOpenClawForAttachingDelay = 250;
-    public boolean startClawA = false;
+    public long startOpenClaw = 0;
+    public long OpenClawDelay = 250;
+    //aprovals
+    public boolean clawCloseApproval=false;
+    public boolean depositClawApproval=false;
+    public boolean depositReady=false;
+    public boolean specimenIntakeClawApproval=false;
     public boolean pullSlideDownApproval = false;
-
     public boolean diddyFun = false;
     public Robot(LinearOpMode op, double x, double y,double theta){
         drive = new Drive(op);
@@ -66,6 +64,19 @@ public class Robot {
                     clawCloseApproval=false;
                 }
             break;
+            case "outake":
+                intake.extend(slidesIntakePos,curTime);
+                intake.wristIntaking();
+                if(intake.getSlidePos()>slidesIntakePos-40){
+                    intake.clawOpen();
+
+                }else{
+                    startOpenClaw=curTime;
+                }
+                if(curTime-startOpenClaw>OpenClawDelay){
+                    Mode="Home";
+                }
+                break;
             case "deposit":
                 if(!depositReady&&intake.slidesStalled&&deposit.slidesStalled){
                     deposit.DepClawClose();
@@ -104,7 +115,7 @@ public class Robot {
                 if(!specimenIntakeClawApproval){
                     startClawClose = curTime;
                 }
-                if(curTime-startClawClose>clawCloseDelay){
+                else if(curTime-startClawClose>clawCloseDelay){
                     Mode=("SpecimenOutake");
                     specimenIntakeClawApproval = false;
                     startSpecimenOutakeTime = curTime;
@@ -113,26 +124,24 @@ public class Robot {
                 deposit.extend(deposit.slidesSpecimenOutaking, curTime);
                 deposit.specimenOutake();
                 if (curTime - startSpecimenOutakeTime > specimenOutakeDelay) {
-                    deposit.extend(deposit.slidesSpecimenDeposit, curTime);
-
-                }
-                if(!pullSlideDownApproval) startPullSlideDownDelay = curTime;
-                if (pullSlideDownApproval) {
-                    if (curTime - startPullSlideDownDelay > specimenPullSlideDownDelay) {
-                        deposit.DepClawOpen();
-                        diddyFun = true;
+                    if (!pullSlideDownApproval) {
+                    startPullSlideDownDelay = curTime;
                     }
-                    if(!diddyFun){
-                        startOpenClawForAttachingDelay = curTime;
+                    else  {
+                        if (curTime - startPullSlideDownDelay > specimenPullSlideDownDelay) {
+                            deposit.DepClawOpen();
+                            diddyFun = true;
+                        }
+                        if (!diddyFun) {
+                            startOpenClaw = curTime;
+                        }
+                        else if (curTime - startOpenClaw > OpenClawDelay) {
+                            pullSlideDownApproval = false;
+                            diddyFun = false;
+                            Mode = "Home";
+                        }
+
                     }
-                    if (curTime - startOpenClawForAttachingDelay > specimenOpenClawForAttachingDelay) {
-                        pullSlideDownApproval = false;
-                        diddyFun = false;
-                        Mode="Home";
-
-
-                    }
-
                 }
 
         }
