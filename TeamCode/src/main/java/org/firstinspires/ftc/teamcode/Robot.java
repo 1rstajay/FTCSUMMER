@@ -47,117 +47,118 @@ public class Robot {
         this.isAuto=isAuto;
     }
     public void UpdateRobot(){
-        curTime=System.currentTimeMillis();
-        switch (Mode){
-            case "Home":
-                intake.clawClose();
+        curTime=System.currentTimeMillis(); // Makes curTime the current time in milliseconds.
+        switch (Mode){ // Switch statement
+            case "Home": // Definition for the default robot state: "Home", essentially just reseting everything
+                intake.clawClose(); // Closes intake claw
                 deposit.retract(curTime);
                 intake.retract(curTime);
                 intake.wristTransfer();
                 deposit.depArmTransfer();
                 deposit.DepRotateTransfer();
                 deposit.DepClawOpen();
-                SlidesAdjust = 0;
-                startClawClose=curTime;
-                specimenIntakeStartTime = curTime;
-                autoIntakeExtendStartTime = curTime;
-                if(isAuto&&homeRetracting){
+                SlidesAdjust = 0; // Resets slides
+                startClawClose=curTime; // Starts claw close delay
+                specimenIntakeStartTime = curTime; // Starts specimen intake delay
+                autoIntakeExtendStartTime = curTime; // Starts auto intake delay
+                if(isAuto&&homeRetracting){ // Tells the robot that home rectrac    ting is done
                     if(curTime-retractingToHomeStartTime>retractingToHomeDelay){
                         homeRetracting=false;
                         retractedHome=true;
                     }
                 }
             break;
-            case "intake":
-                intake.clawOpen();
-                intake.extend((slidesIntakePos + SlidesAdjust),curTime);
+            case "intake": // Sets an "intake" state for the robot
+                intake.clawOpen(); // Self-explanatory
+                intake.extend((slidesIntakePos + SlidesAdjust),curTime); // Extend the slides
                 intake.wristIntaking();
-                if(!clawCloseApproval){
-                    startClawClose=curTime;
+                if(!clawCloseApproval){ // If the approval to allow the claw to be closed returns false
+                    startClawClose=curTime; // Start the timer till the driver can close the claw
                 }else{
-                    intake.clawClose();
-                    if(curTime-startClawClose>clawCloseDelay){
-                        Mode="Home";
-                        clawCloseApproval=false;
+                    intake.clawClose(); // Close the claw
+                    if(curTime-startClawClose>clawCloseDelay){ // If delay is over
+                        Mode="Home"; // Return the robot to the default state
+                        clawCloseApproval=false; // Reset approval
                     }
                 }
 
             break;
-            case "outake":
-                intake.extend(slidesIntakePos,curTime);
-                intake.wristIntaking();
-                if(intake.getSlidePos()>slidesIntakePos-40){
+            case "outake": // Sets an "outake" state for the robot
+                intake.extend(slidesIntakePos,curTime); // Extends the intake slide
+                intake.wristIntaking(); // Rotates the claw
+                if(intake.getSlidePos()>slidesIntakePos-40){ // Checks if the slides are correct height, opens the claw
                     intake.clawOpen();
 
                 }else{
-                    startOpenClaw=curTime;
+                    startOpenClaw=curTime; // Starts the delay for opening the claw
                 }
-                if(curTime-startOpenClaw>OpenClawDelay){
+                if(curTime-startOpenClaw>OpenClawDelay){ // Resets robot once claw has been open
                     Mode="Home";
                 }
                 break;
-            case "deposit":
-                if(!depositReady&&intake.slidesStalled&&deposit.slidesStalled){
-                    deposit.DepClawClose();
-                    intake.clawOpen();
-                    if(curTime-startClawClose>clawCloseDelay){
+            case "deposit": // Sets a "deposit" state for the robot
+                if(!depositReady&&intake.slidesStalled&&deposit.slidesStalled){  // not even i know what the heck slidesstalled means
+                    deposit.DepClawClose(); // Opens the deposit claw
+                    intake.clawOpen(); // Opens the intake claw
+                    if(curTime-startClawClose>clawCloseDelay){ // Checks if the claw close delay is fully passed, then tells the robot that the deposit is ready
                         depositReady=true;
                     }
-                }else if(depositReady){
-                        deposit.extend(HighBasketPos+SlidesAdjust,curTime);
-                        deposit.depArmDeposit();
-                        deposit.DepRotateDeposit();
-                        if(depositClawApproval){
-                            deposit.DepClawOpen();
-                        }else {
-                            startClawClose=curTime;
+                }else if(depositReady){ // Checks if deposit is already ready
+                        deposit.extend(HighBasketPos+SlidesAdjust,curTime); // Extends the slides to high basket level
+                        deposit.depArmDeposit(); // Makes the deposit arm deposit the sample
+                        deposit.DepRotateDeposit(); // Rotates the deposit arm
+                        if(depositClawApproval){ // If the deposit claw is ready
+                            deposit.DepClawOpen(); // Open the deposit claw
+                        }else { // else
+                            startClawClose=curTime; // Start the claw close delay
                         }
-                }else{
-                    startClawClose=curTime;
+                }else{ // else
+                    startClawClose=curTime; // Start the claw close delay
                 }
 
-                if(depositClawApproval&&curTime-startClawClose>clawCloseDelay){
-                    Mode="Home";
-                    depositReady=false;
-                    depositClawApproval=false;
+                if(depositClawApproval&&curTime-startClawClose>clawCloseDelay){ // If deposit claw is ready and claw close delay is finished
+                    Mode="Home"; // Resets robot state
+                    depositReady=false; // Resets deposit ready
+                    depositClawApproval=false; // Resets deposit claw ready
                 }
                 break;
-            case "SpecimenIntake":
-                    deposit.extend(deposit.slidesSpecimenIntake, curTime);
-                    intake.retract(curTime);
-                    deposit.specimenIntake();
-                if(curTime-specimenIntakeStartTime>specimenIntakeDelay) {
-                    if (specimenIntakeClawApproval) {
-                        deposit.DepClawClose();
+            case "SpecimenIntake": // Makes a new robot state: "SpecimenIntake"
+                    deposit.extend(deposit.slidesSpecimenIntake, curTime); // Extends deposit to get ready
+                    intake.retract(curTime); // Retracts intake slide
+                    deposit.specimenIntake(); // Runs specimen intake method
+                if(curTime-specimenIntakeStartTime>specimenIntakeDelay) { // If specimen intake delay is over
+                    if (specimenIntakeClawApproval) { // If specimen intake claw approval is affirmative
+                        deposit.DepClawClose(); // Close the deposit claw
                     }
                 }
-                if(!specimenIntakeClawApproval){
-                    startClawClose = curTime;
+                if(!specimenIntakeClawApproval){ // If specimen intake claw is negative
+                    startClawClose = curTime; // Start the delay for closing the claw
                 }
-                else if(curTime-startClawClose>clawCloseDelay){
-                    Mode=("SpecimenOutake");
-                    specimenIntakeClawApproval = false;
-                    startSpecimenOutakeTime = curTime;
+                else if(curTime-startClawClose>clawCloseDelay){ // If claw close delay is finished
+                    Mode=("SpecimenOutake"); // Set the robot mode to SpecimenOutake
+                    specimenIntakeClawApproval = false; // Resets approval
+                    startSpecimenOutakeTime = curTime; // Starts specimen outake delay
                 }
-            case "SpecimenOutake":
-                deposit.extend(deposit.slidesSpecimenOutaking, curTime);
-                deposit.specimenOutake();
-                if (curTime - startSpecimenOutakeTime > specimenOutakeDelay) {
-                    if (!pullSlideDownApproval) {
-                    startPullSlideDownDelay = curTime;
+                break;
+            case "SpecimenOutake": // Makes a new robot state: "SpecimenOutake"
+                deposit.extend(deposit.slidesSpecimenOutaking, curTime); // Extends the slide for outake
+                deposit.specimenOutake(); // Runs the method specimenOutake()
+                if (curTime - startSpecimenOutakeTime > specimenOutakeDelay) { // If specimen outake delay is finished
+                    if (!pullSlideDownApproval) { // If pull slide down approval is negative
+                    startPullSlideDownDelay = curTime; // Start the pull slide down delay
                     }
-                    else  {
-                        if (curTime - startPullSlideDownDelay > specimenPullSlideDownDelay) {
-                            deposit.DepClawOpen();
-                            diddyFun = true;
+                    else  { // else
+                        if (curTime - startPullSlideDownDelay > specimenPullSlideDownDelay) { // If specimen pull slide down delay is finished
+                            deposit.DepClawOpen(); // Opens the deposit claw
+                            diddyFun = true; // 2nd claw approval is affirmative
                         }
-                        if (!diddyFun) {
-                            startOpenClaw = curTime;
+                        if (!diddyFun) { // If the 2nd claw is negative
+                            startOpenClaw = curTime; // Starts the open claw delay
                         }
-                        else if (curTime - startOpenClaw > OpenClawDelay) {
-                            pullSlideDownApproval = false;
-                            diddyFun = false;
-                            Mode = "Home";
+                        else if (curTime - startOpenClaw > OpenClawDelay) { // else if open claw delay is finished
+                            pullSlideDownApproval = false; // Resets pull slide down approval
+                            diddyFun = false; // Resets 2nd claw approval delay
+                            Mode = "Home"; // Resets robot state
                         }
 
                     }
