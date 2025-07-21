@@ -11,20 +11,42 @@ import org.firstinspires.ftc.robotcore.external.Telemetry;
 @TeleOp (name = "Sample Teleop")
 @Config
 public class Teleop extends LinearOpMode {
+    /* CONTROLS
+    * gamepad1.a and gamepad1.dpad_left to reset state to home in case smth is stuck
+    * gamepad1.a when in home state is to move to intake mode
+    * in intake dpad up down move the slide up and down
+    * in intake right bumper is to close claw on a sample and intake slide in and return to home
+    * gamepad1.b when in home is to go to deposit
+    * in deposit dpad up down move the slide up and down
+    * in deposit left bumper to release sample
+    * gamepad1.y in home goes to intake specimen position
+    * press y again to close claw on specimen and go into hang position
+    * while in specimenOutake press dpad down to drop slides and hang specimen and return to home
+    * while in home press gamepad1.x to outake sample
+    *
+    *
+    *
+    *
+    *
+    *
+    *
+    * */
     Robot robot;
     @Override
     public void runOpMode() throws InterruptedException {
-        robot=new Robot(this,0,0,0);
+        robot=new Robot(this,false);
         Telemetry telemetry = new MultipleTelemetry(this.telemetry, FtcDashboard.getInstance().getTelemetry());
 
-        isStarted();
+        waitForStart();
         while(opModeIsActive()){
             if(gamepad1.a&&gamepad1.dpad_left){//Override
                 robot.Mode="Home";
                 robot.clawCloseApproval=false;
                 robot.depositClawApproval=false;
                 robot.depositReady=false;
-                robot.depositReady=false;
+                robot.specimenIntakeClawApproval=false;
+                robot.pullSlideDownApproval = false;
+                robot.diddyFun = false;
             }
             robot.drive.driveInputs(gamepad1.left_stick_x, -gamepad1.left_stick_y,gamepad1.right_stick_x);
             if(gamepad1.a&&robot.Mode.equals("Home")){
@@ -40,6 +62,9 @@ public class Teleop extends LinearOpMode {
                 if(gamepad1.right_bumper){
                     robot.clawCloseApproval=true;
                 }
+            }
+            if(gamepad1.x&&robot.Mode.equals("Home")){
+                robot.Mode="outake";
             }
             if(gamepad1.b&&robot.Mode.equals("Home")){
                 robot.Mode="deposit";
