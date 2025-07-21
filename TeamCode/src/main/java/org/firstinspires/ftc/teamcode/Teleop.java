@@ -34,10 +34,10 @@ public class Teleop extends LinearOpMode {
     Robot robot;
     @Override
     public void runOpMode() throws InterruptedException {
-        robot=new Robot(this,0,0,0);
+        robot=new Robot(this,false);
         Telemetry telemetry = new MultipleTelemetry(this.telemetry, FtcDashboard.getInstance().getTelemetry());
 
-        isStarted();
+        waitForStart();
         while(opModeIsActive()){
             if(gamepad1.a&&gamepad1.dpad_left){//Override
                 robot.Mode="Home";

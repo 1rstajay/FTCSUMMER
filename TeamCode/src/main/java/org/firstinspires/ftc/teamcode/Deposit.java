@@ -1,14 +1,11 @@
 package org.firstinspires.ftc.teamcode;
 import com.acmerobotics.dashboard.config.Config;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
-import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
-import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
 
-import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
 @Config
 public class Deposit {
@@ -50,7 +47,7 @@ public class Deposit {
     public  long startTime;
     private int targetHeight=HomePos;
     public static int maxHeight=1000;
-    public boolean retracting=false;
+    public boolean extending =false;
     public static int stallOffset=60;
 
     public static double StallPower=-0.3;
@@ -129,13 +126,14 @@ public class Deposit {
         lastError=0;
         startTime=time;
         targetHeight=Math.min(targetPos,maxHeight);
+        extending =true;
     }
     public void retract(long time){
         ErrorSum=0;
         lastError=0;
         startTime=time;
         targetHeight=HomePos;
-        retracting=true;
+
 
     }
     public void updateSlides(long time){
@@ -144,11 +142,11 @@ public class Deposit {
         double power=PID(slidesPos(),targetHeight+drift,TIME);
         depLeftSlide.setPower(power);
         depRightSlide.setPower(power);
-        if(!slidesStalled&&retracting&&slidesPos()<(HomePos+stallRange)){
+        if(!slidesStalled&&!extending &&slidesPos()<(HomePos+stallRange)){
             depLeftSlide.setPower(StallPower);
             depRightSlide.setPower(StallPower);
             if(slidesCurrent()>stallCurrent){
-                retracting=false;
+                extending =false;
                 slidesStalled=true;
                 drift+=HomePos-slidesPos();
             }
