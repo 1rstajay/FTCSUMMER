@@ -98,7 +98,7 @@ public class Robot {
                 break;
             case "deposit": // Sets a "deposit" state for the robot
                 if(!depositReady&&intake.slidesStalled&&deposit.slidesStalled){  // not even i know what the heck slidesstalled means
-                    deposit.DepClawClose(); // Opens the deposit claw
+                    deposit.DepClawClose(); // Closes the deposit claw
                     intake.clawOpen(); // Opens the intake claw
                     if(curTime-startClawClose>clawCloseDelay){ // Checks if the claw close delay is fully passed, then tells the robot that the deposit is ready
                         depositReady=true;
