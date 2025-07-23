@@ -20,7 +20,7 @@ public class ServoTest extends LinearOpMode {
     public static double pos1=0.0;
     public static double pos2=0.0;
     public static double syncpos=0.0;
-    public static boolean sync=false;
+    public static boolean sync=true;
     public static double offset=0.0;
     @Override
     public void runOpMode() {

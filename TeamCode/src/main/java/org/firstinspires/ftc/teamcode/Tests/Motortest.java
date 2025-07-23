@@ -48,7 +48,7 @@ public class Motortest extends LinearOpMode{
                 //Motor1.setPower(power1);
                 //Motor2.setPower(power2);
             }
-            //deposit.updateSlides(System.currentTimeMillis());
+            // deposit.updateSlides(System.currentTimeMillis());
             intake.updateSlides(System.currentTimeMillis());
             telemetry.addData("Target Position", target);
             telemetry.addData("current dep pos: ",deposit.slidesPos());

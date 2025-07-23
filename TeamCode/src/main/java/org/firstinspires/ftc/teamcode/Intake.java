@@ -28,17 +28,15 @@ public class Intake {
     public static double wristTransferPos=0.6;
 
 
-    //TODO PID stuff
-
-    public static double kp=0;
+    public static double kp=0.01; //tuned
     public static double ki=0; // not very useful
     public static double kd=0;
     private int errorChange;
     private int lastError=0;
     private int errorSum=0;
-    public static int slideHomePos=0;//this is the fully rectracted pos; tuned
+    public static int slideHomePos=-10500;//this is the fully rectracted pos; tuned
     public static int targetheight=slideHomePos;
-    public static int Maxheight=9595;//tuned
+    public static int Maxheight=-890;//tuned
     private long startTime;
     public boolean retracting=false;
 

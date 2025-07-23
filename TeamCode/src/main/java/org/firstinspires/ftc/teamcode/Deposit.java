@@ -28,7 +28,7 @@ public class Deposit {
     public static double RotateDeposit=0.65;
     //TODO needs tuning
     public static double armOffset=0.0;
-    public static double armTransfer=0.5;
+    public static double armTransfer=0.14; // tuned
     public static double armDeposit=0.5;
     public static double armSpecimentIntakePos=0.5;
     public static double rotateSpecimenIntake=0.5;
@@ -36,8 +36,8 @@ public class Deposit {
     public static double armSpecimenOutake=0.5;
     // PID&Slides stuff
     //TODO needs tuning pls
-    public int slidesSpecimenIntake=200;
-    public int slidesSpecimenOutaking=500;
+    public int slidesSpecimenIntake=473; // tuned
+    public int slidesSpecimenOutaking=1990; // tuned
     public int slidesSpecimenDeposit=900;
     private int lastError=0;
     private int ErrorSum=0;
