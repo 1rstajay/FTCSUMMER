@@ -7,29 +7,31 @@ public class Robot {
     long curTime;
     public boolean isAuto;
     public String Mode="Home";
-    Drive drive;
-    Deposit deposit;
-    Intake intake;
+    public Drive drive;
+    public Deposit deposit;
+    public Intake intake;
     //TODO needs tuning
     public static int slidesIntakePos=500;
     public long startClawClose;
-    public int clawCloseDelay=1000;
-    public static int HighBasketPos=700;
+    public int clawCloseDelay=2000;
+    public static int HighBasketPos=3100;//tuned
     public int SlidesAdjust = 0;
     public long specimenIntakeStartTime=0;
     public int specimenIntakeDelay=2000;
     public int specimenOutakeDelay=2000;
     public long startSpecimenOutakeTime = 0;
-    public int specimenPullSlideDownDelay = 1000;
+    public int specimenPullSlideDownDelay = 2000;
     public long startPullSlideDownDelay = 0;
-    public long startOpenClaw = 0;
-    public long OpenClawDelay = 1000;
+    public long startOpenClaw;
+    public long OpenClawDelay = 2000;
     public long autoSlidesExtendStartTime;
-    public int autoSlidesExtendDelay = 500;
+    public int autoSlidesExtendDelay = 2000;
     public long autoIntakeExtendStartTime;
-    public int autoIntakeExtendDelay = 500;
+    public int autoIntakeExtendDelay = 2000;
     public long retractingToHomeStartTime;
     public int retractingToHomeDelay=3000;
+    public long startArmRetractTime;
+    public int armRetractDelay = 2000;
     //aprovals
     public boolean clawCloseApproval=false;
     public boolean depositClawApproval=false;
@@ -37,10 +39,8 @@ public class Robot {
     public boolean specimenIntakeClawApproval=false;
     public boolean pullSlideDownApproval = false;
     public boolean diddyFun = false;
-    public boolean homeRetracting=false;
-    public boolean retractedHome=false;
-    public long startDepClawOpenTime = 0;
-    public int armRetractDelay = 2000;
+    public boolean homeRetracting=false;//auto
+    public boolean retractedHome=false;//auto
     public boolean waitingToRetractArm = false;
 
     public Robot(LinearOpMode op, boolean isAuto){
@@ -100,7 +100,7 @@ public class Robot {
                 }
                 break;
             case "deposit": // Sets a "deposit" state for the robot
-                if(!depositReady&&intake.slidesStalled&&deposit.slidesStalled){  // not even i know what the heck slidesstalled means
+                if(!depositReady&&intake.slideIsAtPos(intake.slideHomePos)&&deposit.slideIsAtPos(deposit.HomePos)){  // not even i know what the heck slidesstalled means
                     deposit.DepClawClose(); // Closes the deposit claw
                     intake.clawOpen(); // Opens the intake claw
                     if(curTime-startClawClose>clawCloseDelay){ // Checks if the claw close delay is fully passed, then tells the robot that the deposit is ready
@@ -113,19 +113,20 @@ public class Robot {
                     if(depositClawApproval){ // If the deposit claw is ready
                         deposit.DepClawOpen(); // Open the deposit claw
                     }else { // else
-                        startClawClose=curTime; // Start the claw close delay
+                        startOpenClaw=curTime; // Start the claw close delay
                     }
                 }else{ // else
-                    startClawClose=curTime; // Start the claw close delay
+                    startOpenClaw=curTime;// Start the claw close delay
+                    startClawClose=curTime;
                 }
 
-                if(depositClawApproval && curTime - startClawClose > clawCloseDelay){
+                if(depositReady&&depositClawApproval && curTime - startOpenClaw > OpenClawDelay){
                     if (!waitingToRetractArm) {
-                        deposit.DepClawOpen();
-                        startDepClawOpenTime = curTime;
-                        waitingToRetractArm = true;
-                    } else if (curTime - startDepClawOpenTime > armRetractDelay) {
                         deposit.depArmTransfer();
+                        deposit.DepRotateTransfer();
+                        startArmRetractTime = curTime;
+                        waitingToRetractArm = true;
+                    } else if (curTime - startArmRetractTime > armRetractDelay) {
                         Mode = "Home";
                         depositReady = false;
                         depositClawApproval = false;
@@ -158,7 +159,8 @@ public class Robot {
                     if (!pullSlideDownApproval) { // If pull slide down approval is negative
                         startPullSlideDownDelay = curTime; // Start the pull slide down delay
                     }
-                    else  { // else
+                    else  {
+                        deposit.extend(deposit.slidesSpecimenDeposit,curTime);
                         if (curTime - startPullSlideDownDelay > specimenPullSlideDownDelay) { // If specimen pull slide down delay is finished
                             deposit.DepClawOpen(); // Opens the deposit claw
                             diddyFun = true; // 2nd claw approval is affirmative
@@ -176,7 +178,7 @@ public class Robot {
                 }
                 break;
             case "autoDeposit":
-                if(!depositReady&&intake.slidesStalled&&deposit.slidesStalled){
+                if(!depositReady&&intake.slideIsAtPos(intake.slideHomePos)&&deposit.slideIsAtPos(deposit.HomePos)){
                     deposit.DepClawClose();
                     intake.clawOpen();
                     if(curTime-startClawClose>clawCloseDelay){
@@ -188,22 +190,23 @@ public class Robot {
                     deposit.extend(HighBasketPos,curTime);
                     deposit.depArmDeposit();
                     deposit.DepRotateDeposit();
-                    if(curTime- autoSlidesExtendStartTime > autoSlidesExtendDelay){
+                    if(curTime - autoSlidesExtendStartTime > autoSlidesExtendDelay){
                         deposit.DepClawOpen();
+                        depositClawApproval=true;
                     }else {
-                        startClawClose=curTime;
+                        startOpenClaw=curTime;
                     }
                 }else{
+                    startOpenClaw=curTime;
                     startClawClose=curTime;
                 }
-
-                if (depositClawApproval && curTime - startClawClose > clawCloseDelay) {
+                if (depositClawApproval && curTime - startOpenClaw > OpenClawDelay) {
                     if (!waitingToRetractArm) {
-                        deposit.DepClawOpen(); // Open the claw
-                        startDepClawOpenTime = curTime; // Start delay timer
+                        deposit.depArmTransfer();
+                        deposit.DepRotateTransfer();
+                        startArmRetractTime = curTime; // Start delay timer
                         waitingToRetractArm = true;
-                    } else if (curTime - startDepClawOpenTime > armRetractDelay) {
-                        deposit.depArmTransfer(); // Move arm out of the way
+                    } else if (curTime - startArmRetractTime > armRetractDelay) {
                         Mode = "Home";
                         depositReady = false;
                         depositClawApproval = false;

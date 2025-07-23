@@ -8,7 +8,7 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 
-@TeleOp (name = "Sample Teleop")
+@TeleOp (name = "Sample org.firstinspires.ftc.teamcode.Teleop")
 @Config
 public class Teleop extends LinearOpMode {
     /* CONTROLS
@@ -36,10 +36,10 @@ public class Teleop extends LinearOpMode {
     public void runOpMode() throws InterruptedException {
         robot=new Robot(this,false);
         Telemetry telemetry = new MultipleTelemetry(this.telemetry, FtcDashboard.getInstance().getTelemetry());
-
+        robot.UpdateRobot();
         waitForStart();
         while(opModeIsActive()){
-            if(gamepad1.a&&gamepad1.dpad_left){//Override
+            if(gamepad1.a&&gamepad1.dpad_left){//reset button
                 robot.Mode="Home";
                 robot.clawCloseApproval=false;
                 robot.depositClawApproval=false;
@@ -47,6 +47,7 @@ public class Teleop extends LinearOpMode {
                 robot.specimenIntakeClawApproval=false;
                 robot.pullSlideDownApproval = false;
                 robot.diddyFun = false;
+                robot.waitingToRetractArm = false;
             }
             robot.drive.driveInputs(gamepad1.left_stick_x, -gamepad1.left_stick_y,gamepad1.right_stick_x);
             if(gamepad1.a&&robot.Mode.equals("Home")){

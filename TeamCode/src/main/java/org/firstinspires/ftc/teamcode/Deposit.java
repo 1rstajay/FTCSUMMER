@@ -1,4 +1,5 @@
 package org.firstinspires.ftc.teamcode;
+
 import com.acmerobotics.dashboard.config.Config;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -20,11 +21,12 @@ public class Deposit {
     private DcMotorEx depRightSlide;
 
     //Servo positions
+
+    public static double depClawOpen=0.46;
+    public static double depClawClose=0.61;
+    public static double RotateTransfer=0.0;
+    public static double RotateDeposit=0.65;
     //TODO needs tuning
-    public static double depClawOpen=0.5;
-    public static double depClawClose=0.5;
-    public static double RotateTransfer=0.5;
-    public static double RotateDeposit=0.5;
     public static double armOffset=0.0;
     public static double armTransfer=0.5;
     public static double armDeposit=0.5;
@@ -39,14 +41,14 @@ public class Deposit {
     public int slidesSpecimenDeposit=900;
     private int lastError=0;
     private int ErrorSum=0;
-    public static double kp=0.0;
+    public static double kp=0.01;//tuned
     public static double ki=0.0;//not very useful
     public static double kd=0.0;
-    public static int HomePos=0;
+    public static int HomePos=-600;//tuned
 
     public  long startTime;
     private int targetHeight=HomePos;
-    public static int maxHeight=1000;
+    public static int maxHeight=4200;//tuned
     public boolean extending =false;
     public static int stallOffset=60;
 
@@ -55,7 +57,7 @@ public class Deposit {
     public static double stallRange=60;
     public int drift=0;
     public double stallCurrent=3;
-    public boolean slidesStalled=false;
+    //public boolean slidesStalled=false;
 
     public Deposit(LinearOpMode op){
         depClaw = op.hardwareMap.get(Servo.class,"depClaw");
@@ -109,6 +111,9 @@ public class Deposit {
     //slides and PID
     private double PID(int initPos,int targetPos,long time){
         int Error = targetPos-initPos;
+        if(time==0){
+            time=1;
+        }
         double errorChange=(Error-lastError)/time;
         ErrorSum+=(Error*time);
         lastError=Error;
@@ -142,7 +147,7 @@ public class Deposit {
         double power=PID(slidesPos(),targetHeight+drift,TIME);
         depLeftSlide.setPower(power);
         depRightSlide.setPower(power);
-        if(!slidesStalled&&!extending &&slidesPos()<(HomePos+stallRange)){
+        /*if(!slidesStalled&&!extending &&slidesPos()<(HomePos+stallRange)){
             depLeftSlide.setPower(StallPower);
             depRightSlide.setPower(StallPower);
             if(slidesCurrent()>stallCurrent){
@@ -154,6 +159,14 @@ public class Deposit {
             depLeftSlide.setPower(holdStallPower);
             depRightSlide.setPower(holdStallPower);
 
+        }*/
+
+    }
+    public boolean slideIsAtPos(int pos){
+        if(Math.abs(slidesPos()-pos)<30){
+            return true;
+        }else{
+            return false;
         }
     }
 

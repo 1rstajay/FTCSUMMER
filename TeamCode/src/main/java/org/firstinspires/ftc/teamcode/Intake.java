@@ -1,4 +1,5 @@
 package org.firstinspires.ftc.teamcode;
+
 import com.acmerobotics.dashboard.config.Config;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -19,12 +20,12 @@ public class Intake {
     private DcMotorEx intakeSlide;//left and right also from bot perspective
 
 
+
+    public static double clawOpenPos=0.46;
+    public static double clawClosePos=0.6;
     //TODO needs tuning
-    public static double clawOpenPos=0.5;
-    public static double clawClosePos=0.5;
     public static double wristIntakePos=0.5;
-    public static double wristOffest=0.0;
-    public static double wristTransferPos=0.5;
+    public static double wristTransferPos=0.6;
 
 
     //TODO PID stuff
@@ -35,19 +36,11 @@ public class Intake {
     private int errorChange;
     private int lastError=0;
     private int errorSum=0;
-    public static int slideHomePos=0;//this is the fully rectracted pos;
+    public static int slideHomePos=0;//this is the fully rectracted pos; tuned
     public static int targetheight=slideHomePos;
-    public static int Maxheight=10000;//def needs to be tune es muy importanto
+    public static int Maxheight=9595;//tuned
     private long startTime;
     public boolean retracting=false;
-    public static int stallOffset=60;
-
-    public static double StallPower=-0.3;
-    public static double holdStallPower=-0.1;
-    public static double stallRange=60;
-    public int drift=0;
-    public double stallCurrent=3;
-    public boolean slidesStalled=false;
 
     public Intake(LinearOpMode op){
 
@@ -76,6 +69,9 @@ public class Intake {
     //PID(more like PD) and slide stuff
     public double PID(int currPos, int targetPos,double time){
         int error = targetPos-currPos;
+        if(time==0){
+            time=1;
+        }
         double errorChange = (error-lastError)/time;
         lastError=error;
         errorSum+=error*time;
@@ -97,19 +93,8 @@ public class Intake {
     public void updateSlides(long time){
         double TIME=time-startTime;
         startTime=time;
-        double power=PID(getSlidePos(),targetheight+drift,TIME);
+        double power=PID(getSlidePos(),targetheight,TIME);
         intakeSlide.setPower(power);
-        if(!slidesStalled&&retracting&&getSlidePos()<(slideHomePos+stallRange)){
-            intakeSlide.setPower(StallPower);
-            if(slidesCurrent()>stallCurrent){
-                retracting=false;
-                slidesStalled=true;
-                drift+=slideHomePos-getSlidePos();
-            }
-        }else if(slidesStalled){
-            intakeSlide.setPower(holdStallPower);
-
-        }
     }
     public int getSlidePos(){
         int pos=(intakeSlide.getCurrentPosition());
@@ -117,6 +102,13 @@ public class Intake {
     }
     public double slidesCurrent(){
         return(intakeSlide.getCurrent(CurrentUnit.AMPS));
+    }
+    public boolean slideIsAtPos(int pos){
+        if(Math.abs(getSlidePos()-pos)<30){
+            return true;
+        }else{
+            return false;
+        }
     }
 
 }
