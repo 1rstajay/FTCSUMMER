@@ -159,7 +159,8 @@ public class Robot {
                     if (!pullSlideDownApproval) { // If pull slide down approval is negative
                         startPullSlideDownDelay = curTime; // Start the pull slide down delay
                     }
-                    else  { // else
+                    else  {
+                        deposit.extend(deposit.slidesSpecimenDeposit,curTime);
                         if (curTime - startPullSlideDownDelay > specimenPullSlideDownDelay) { // If specimen pull slide down delay is finished
                             deposit.DepClawOpen(); // Opens the deposit claw
                             diddyFun = true; // 2nd claw approval is affirmative
