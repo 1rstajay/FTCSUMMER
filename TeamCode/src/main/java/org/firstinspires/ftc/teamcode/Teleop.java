@@ -8,59 +8,75 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 
-@TeleOp (name = "Sample org.firstinspires.ftc.teamcode.Teleop")
+@TeleOp (name = "Teleop")
 @Config
 public class Teleop extends LinearOpMode {
-    /* CONTROLS
-    * gamepad1.a and gamepad1.dpad_left to reset state to home in case smth is stuck
-    * gamepad1.a when in home state is to move to intake mode
-    * in intake dpad up down move the slide up and down
-    * in intake right bumper is to close claw on a sample and intake slide in and return to home
-    * gamepad1.b when in home is to go to deposit
-    * in deposit dpad up down move the slide up and down
-    * in deposit left bumper to release sample
-    * gamepad1.y in home goes to intake specimen position
-    * press y again to close claw on specimen and go into hang position
-    * while in specimenOutake press dpad down to drop slides and hang specimen and return to home
-    * while in home press gamepad1.x to outake sample
-    *
-    *
-    *
-    *
-    *
-    *
-    *
-    * */
+    /*
+    press 'a' while in home to go to intake
+    then press left bumper to get sample and go back to home(dpad up&down can adjust slide)
+    also can u dpad left and right to move wrist down and up respectively
+    x in home to outake
+    b in home to go to deposit
+    dpad up and down in deposit to adjust slides
+    left bumper in deposit to open claw and drop sample and go back to home
+    press both triggers at the same time to reset everything and go back to home in case u get stuck in some software issue
+     */
     Robot robot;
     @Override
     public void runOpMode() throws InterruptedException {
+        String Controls="press 'a' while in home to go to intake\n" +
+                "    then press left bumper to get sample and go back to home(dpad up&down can adjust actuator)\n" +
+                "    also u can press dpad left and right to move wrist down and up respectively\n" +
+                "    x in home to outake\n" +
+                "    b in home to go to deposit\n" +
+                "    dpad up and down in deposit to adjust slides\n" +
+                "    left bumper in deposit to open claw and drop sample and go back to home\n" +
+                "    press both triggers at the same time to reset everything and go back to home in case u get stuck in some software issue";
         robot=new Robot(this,false);
         Telemetry telemetry = new MultipleTelemetry(this.telemetry, FtcDashboard.getInstance().getTelemetry());
         robot.UpdateRobot();
         waitForStart();
         while(opModeIsActive()){
-            if(gamepad1.a&&gamepad1.dpad_left){//reset button
+            if(gamepad2.a){
+                robot.Mode.equals("deposit");
+                robot.SlidesAdjust=robot.slideParkPosAdjustment;
+            }
+            if(gamepad1.left_trigger>0.3&&gamepad1.right_trigger>0.3){//reset button
                 robot.Mode="Home";
                 robot.clawCloseApproval=false;
                 robot.depositClawApproval=false;
                 robot.depositReady=false;
                 robot.specimenIntakeClawApproval=false;
-                robot.pullSlideDownApproval = false;
+                robot.specimenOpenClawApproval = false;
                 robot.diddyFun = false;
                 robot.waitingToRetractArm = false;
+                robot.specimenDepositArmApproval=false;
             }
             robot.drive.driveInputs(gamepad1.left_stick_x, -gamepad1.left_stick_y,gamepad1.right_stick_x);
             if(gamepad1.a&&robot.Mode.equals("Home")){
                 robot.Mode="intake";
             }
+            if(robot.Mode.equals("Home")) {
+                if (gamepad1.dpad_up) {
+                    robot.SlidesAdjust += 30;
+                } else if (gamepad1.dpad_down) {
+                    robot.SlidesAdjust -= 30;
+                }
+            }
             if(robot.Mode.equals("intake")){
                 if(gamepad1.dpad_up){
-                    robot.SlidesAdjust +=10;
+                    robot.SlidesAdjust +=30;
                 }else if(gamepad1.dpad_down){
-                    robot.SlidesAdjust -=10;
+                    robot.SlidesAdjust -=30;
+                }
+                if(gamepad1.dpad_left){
+                    robot.intake.wristIntaking();
+                }
+                if(gamepad1.dpad_right){
+                    robot.intake.wristTransfer();
                 }
 
-                if(gamepad1.right_bumper){
+                if(gamepad1.left_bumper){
                     robot.clawCloseApproval=true;
                 }
             }
@@ -88,12 +104,18 @@ public class Teleop extends LinearOpMode {
                   robot.specimenIntakeClawApproval=true;
               }
             }
-            if(robot.Mode.equals("SpecimenOutake") && gamepad1.dpad_down) {
-                robot.pullSlideDownApproval = true;
+            if(robot.Mode.equals("SpecimenOutake")&& gamepad1.left_bumper)
+            if(robot.Mode.equals("SpecimenOutake") && gamepad1.right_bumper) {
+                robot.specimenOpenClawApproval = true;
             }
 
             robot.UpdateRobot();
-            telemetry.addData("state: ",robot.Mode);
+            telemetry.addData("state",robot.Mode);
+            telemetry.addData("depslides pos",robot.deposit.slidesPos());
+            telemetry.addData("intake slides pos",robot.intake.getSlidePos());
+            telemetry.addData("depositReady", robot.depositReady);
+            telemetry.addData("Controls",Controls);
+            telemetry.update();
         }
     }
 }

@@ -23,22 +23,26 @@ public class Intake {
 
     public static double clawOpenPos=0.46;
     public static double clawClosePos=0.6;
-    //TODO needs tuning
-    public static double wristIntakePos=0.5;
-    public static double wristTransferPos=0.6;
+    public static double wristIntakePos=1;
+    public static double wristTransferPos=0.4;
 
-
-    public static double kp=0.01; //tuned
+//TODO tuned positions again mb
+    public static double kp=0.01; //tune
     public static double ki=0; // not very useful
     public static double kd=0;
     private int errorChange;
     private int lastError=0;
     private int errorSum=0;
-    public static int slideHomePos=-10500;//this is the fully rectracted pos; tuned
+    public static int slideHomePos=0;//this is the fully rectracted pos; tuned
     public static int targetheight=slideHomePos;
-    public static int Maxheight=-890;//tuned
+    public static int Maxheight=9500;//tuned
     private long startTime;
-    public boolean retracting=false;
+    public boolean extending = false;
+    public static double StallPower=-0.3;
+    public static double stallRange=30;
+    public static double stallCurrent=11;
+    public boolean slidesStalled=false;
+
 
     public Intake(LinearOpMode op){
 
@@ -66,6 +70,7 @@ public class Intake {
     //rotate
     //PID(more like PD) and slide stuff
     public double PID(int currPos, int targetPos,double time){
+        targetPos=Math.min(targetPos,Maxheight);
         int error = targetPos-currPos;
         if(time==0){
             time=1;
@@ -80,19 +85,27 @@ public class Intake {
         errorSum=0;
         lastError=0;
         targetheight=Math.min(targetPos,Maxheight);
+        extending=true;
+        slidesStalled=false;
     }
     public void retract(long time){
         startTime=time;
         errorSum=0;
         lastError=0;
        targetheight=slideHomePos;
-        retracting=true;
+        extending=false;
     }
     public void updateSlides(long time){
         double TIME=time-startTime;
         startTime=time;
         double power=PID(getSlidePos(),targetheight,TIME);
         intakeSlide.setPower(power);
+        if(!slidesStalled&&!extending&&slidesCurrent()>stallCurrent){
+            slidesStalled=true;
+            intakeSlide.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+            intakeSlide.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+
+        }
     }
     public int getSlidePos(){
         int pos=(intakeSlide.getCurrentPosition());
@@ -108,5 +121,8 @@ public class Intake {
             return false;
         }
     }
-
+    public void manualEncoderReset(){
+        intakeSlide.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        intakeSlide.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+    }
 }

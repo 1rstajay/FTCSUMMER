@@ -1,7 +1,14 @@
 package org.firstinspires.ftc.teamcode;
 
+import static org.firstinspires.ftc.teamcode.Intake.slideHomePos;
+
+import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.config.Config;
+import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+
+import org.firstinspires.ftc.robotcore.external.Telemetry;
+
 @Config
 public class Robot {
     long curTime;
@@ -11,37 +18,42 @@ public class Robot {
     public Deposit deposit;
     public Intake intake;
     //TODO needs tuning
-    public static int slidesIntakePos=500;
+    public static int slidesIntakePos=9300;
     public long startClawClose;
-    public int clawCloseDelay=2000;
-    public static int HighBasketPos=3100;//tuned
+    public static int clawCloseDelay=500;
+    public static int HighBasketPos=4095;//tuned
     public int SlidesAdjust = 0;
     public long specimenIntakeStartTime=0;
-    public int specimenIntakeDelay=2000;
-    public int specimenOutakeDelay=2000;
+    public static int specimenIntakeDelay=2000;
+    public static int specimenOutakeDelay=2000;
     public long startSpecimenOutakeTime = 0;
     public int specimenPullSlideDownDelay = 2000;
     public long startPullSlideDownDelay = 0;
     public long startOpenClaw;
-    public long OpenClawDelay = 2000;
+    public static int OpenClawDelay = 700;
     public long autoSlidesExtendStartTime;
-    public int autoSlidesExtendDelay = 2000;
+    public static int autoSlidesExtendDelay = 2000;
     public long autoIntakeExtendStartTime;
-    public int autoIntakeExtendDelay = 2000;
+    public static int autoIntakeExtendDelay = 2000;
     public long retractingToHomeStartTime;
-    public int retractingToHomeDelay=3000;
+    public static int retractingToHomeDelay=3000;
     public long startArmRetractTime;
-    public int armRetractDelay = 2000;
+    public static int armRetractDelay = 900;
+    public long depSpecArmStartTime;
+    public int depSpecArmDelay=1000;
+    public  static int slideParkPosAdjustment =-3000;
     //aprovals
     public boolean clawCloseApproval=false;
     public boolean depositClawApproval=false;
     public boolean depositReady=false;
     public boolean specimenIntakeClawApproval=false;
-    public boolean pullSlideDownApproval = false;
+    public boolean specimenOpenClawApproval = false;
     public boolean diddyFun = false;
     public boolean homeRetracting=false;//auto
     public boolean retractedHome=false;//auto
     public boolean waitingToRetractArm = false;
+    public boolean specimenDepositArmApproval=false;
+
 
     public Robot(LinearOpMode op, boolean isAuto){
         drive = new Drive(op);
@@ -55,12 +67,12 @@ public class Robot {
             case "Home": // Definition for the default robot state: "Home", essentially just reseting everything
                 intake.clawClose(); // Closes intake claw
                 deposit.retract(curTime);
-                intake.retract(curTime);
+                intake.extend(slideHomePos+SlidesAdjust,curTime);
                 intake.wristTransfer();
                 deposit.depArmTransfer();
                 deposit.DepRotateTransfer();
                 deposit.DepClawOpen();
-                SlidesAdjust = 0; // Resets slides
+                 // Resets slides
                 startClawClose=curTime; // Starts claw close delay
                 specimenIntakeStartTime = curTime; // Starts specimen intake delay
                 autoIntakeExtendStartTime = curTime; // Starts auto intake delay
@@ -74,33 +86,34 @@ public class Robot {
             case "intake": // Sets an "intake" state for the robot
                 intake.clawOpen(); // Self-explanatory
                 intake.extend((slidesIntakePos + SlidesAdjust),curTime); // Extend the slides
-                intake.wristIntaking();
                 if(!clawCloseApproval){ // If the approval to allow the claw to be closed returns false
                     startClawClose=curTime; // Start the timer till the driver can close the claw
                 }else{
                     intake.clawClose(); // Close the claw
                     if(curTime-startClawClose>clawCloseDelay){ // If delay is over
                         Mode="Home"; // Return the robot to the default state
-                        clawCloseApproval=false; // Reset approval
+                        clawCloseApproval=false;
+                        SlidesAdjust = 0;
                     }
                 }
 
                 break;
             case "outake": // Sets an "outake" state for the robot
-                intake.extend(slidesIntakePos,curTime); // Extends the intake slide
+                intake.extend(slidesIntakePos+SlidesAdjust,curTime); // Extends the intake slide
                 intake.wristIntaking(); // Rotates the claw
-                if(intake.getSlidePos()>slidesIntakePos-40){ // Checks if the slides are correct height, opens the claw
+                if(intake.slideIsAtPos(slidesIntakePos)){ // Checks if the slides are correct height, opens the claw
                     intake.clawOpen();
-
+                    intake.wristTransfer();
                 }else{
                     startOpenClaw=curTime; // Starts the delay for opening the claw
                 }
                 if(curTime-startOpenClaw>OpenClawDelay){ // Resets robot once claw has been open
                     Mode="Home";
+                    SlidesAdjust = 0;
                 }
                 break;
             case "deposit": // Sets a "deposit" state for the robot
-                if(!depositReady&&intake.slideIsAtPos(intake.slideHomePos)&&deposit.slideIsAtPos(deposit.HomePos)){  // not even i know what the heck slidesstalled means
+                if(!depositReady){  // not even i know what the heck slidesstalled means
                     deposit.DepClawClose(); // Closes the deposit claw
                     intake.clawOpen(); // Opens the intake claw
                     if(curTime-startClawClose>clawCloseDelay){ // Checks if the claw close delay is fully passed, then tells the robot that the deposit is ready
@@ -131,6 +144,7 @@ public class Robot {
                         depositReady = false;
                         depositClawApproval = false;
                         waitingToRetractArm = false;
+                        SlidesAdjust = 0;
                     }
                 }
                 break;
@@ -155,11 +169,27 @@ public class Robot {
             case "SpecimenOutake": // Makes a new robot state: "SpecimenOutake"
                 deposit.extend(deposit.slidesSpecimenOutaking, curTime); // Extends the slide for outake
                 deposit.specimenOutake(); // Runs the method specimenOutake()
-                if (curTime - startSpecimenOutakeTime > specimenOutakeDelay) { // If specimen outake delay is finished
-                    if (!pullSlideDownApproval) { // If pull slide down approval is negative
-                        startPullSlideDownDelay = curTime; // Start the pull slide down delay
+                if (curTime - startSpecimenOutakeTime > specimenOutakeDelay) {
+                    if(specimenDepositArmApproval) {
+                        deposit.depArmDepositSpecimen();
+                        if(curTime-depSpecArmStartTime>depSpecArmDelay) {
+                            if (specimenOpenClawApproval) {
+                                deposit.DepClawOpen(); // Opens the deposit claw
+                                diddyFun = true;
+                            }
+                            if (!diddyFun) {
+                                startOpenClaw = curTime; // Starts the open claw delay
+                            } else if (curTime - startOpenClaw > OpenClawDelay) {
+                                specimenOpenClawApproval = false;
+                                diddyFun = false;
+                                specimenDepositArmApproval=false;
+                                Mode = "Home"; // Resets robot state
+                            }
+                        }
+                    }else{
+                        depSpecArmStartTime=curTime;
                     }
-                    else  {
+                    /*else  {
                         deposit.extend(deposit.slidesSpecimenDeposit,curTime);
                         if (curTime - startPullSlideDownDelay > specimenPullSlideDownDelay) { // If specimen pull slide down delay is finished
                             deposit.DepClawOpen(); // Opens the deposit claw
@@ -169,16 +199,16 @@ public class Robot {
                             startOpenClaw = curTime; // Starts the open claw delay
                         }
                         else if (curTime - startOpenClaw > OpenClawDelay) { // else if open claw delay is finished
-                            pullSlideDownApproval = false; // Resets pull slide down approval
+                            specimenOpenClawApproval = false; // Resets pull slide down approval
                             diddyFun = false; // Resets 2nd claw approval delay
                             Mode = "Home"; // Resets robot state
                         }
 
-                    }
+                    }*/
                 }
                 break;
             case "autoDeposit":
-                if(!depositReady&&intake.slideIsAtPos(intake.slideHomePos)&&deposit.slideIsAtPos(deposit.HomePos)){
+                if(!depositReady&&intake.slideIsAtPos(slideHomePos)&&deposit.slideIsAtPos(deposit.HomePos)){
                     deposit.DepClawClose();
                     intake.clawOpen();
                     if(curTime-startClawClose>clawCloseDelay){
@@ -239,5 +269,6 @@ public class Robot {
         }
         intake.updateSlides(curTime);
         deposit.updateSlides(curTime);
+
     }
 }
